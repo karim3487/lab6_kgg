@@ -13,6 +13,8 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0, 0, -20);
 glm::vec3 cameraUp = glm::vec3(0, 1, 0);
 
+float theta = 1;
+
 
 GLfloat cameraSpeed = 0.1;
 
@@ -22,6 +24,9 @@ GLfloat spinObj = 0;
 GLfloat spinCamera = 0;
 GLboolean keys[1024];
 
+GLfloat vertex[] = {-1,-1,0,   1,-1,0,   1,1,0,   -1,1,0};
+GLfloat normal[] = {-1,-1,4,   1,-1,4,   1,1,4,   -1,1,4};
+
 using namespace std;
 
 GLvoid InitGL(GLvoid);
@@ -29,6 +34,7 @@ GLvoid DrawGLScene(GLvoid);
 GLvoid ReSizeGLScene(int Width, int Height);
 GLvoid processNormalKeys(unsigned char key, int x, int y);
 GLvoid DrawObject(GLvoid);
+GLvoid DrawAxis(GLvoid);
 GLvoid processSpecialKeys(int key, int x, int y);
 GLvoid processUpKeys(unsigned char, int, int);
 GLvoid do_movement(GLvoid);
@@ -53,7 +59,7 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(processNormalKeys);
     glutSpecialFunc(processSpecialKeys);
     glutKeyboardUpFunc(processUpKeys);
-//    glutMouseFunc(processMouseKeys);
+//    glutMouseFunc(procerssMouseKeys);
 
     // Основной цикл GLUT
     glutMainLoop();
@@ -63,31 +69,43 @@ int main(int argc, char **argv) {
 
 GLvoid DrawGLScene(GLvoid) {
     do_movement();
-    glMatrixMode(GL_MODELVIEW);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
-
     glPushMatrix();
-    glTranslated(0, 0, -30);
-    DrawObject();
-    glTranslated(0, 0, 30);
+    glRotated(-60, 1, 0, 0);
+    glRotated(33, 0, 0, 1);
+    glTranslated(3, 4, -3);
+    glPushMatrix();
+        glRotatef(theta, 0, 1, 0);
+        GLfloat position[] = {0,0,1,0};
+        glLightfv(GL_LIGHT0, GL_POSITION, position);
+
+        glTranslatef(0,0,1);
+        glScalef(0.2,0.2,0.2);
+        glColor3f(1, 1, 1);
+        DrawObject();
+    glPopMatrix();
+    DrawAxis();
+    glColor3f(0, 1, 0);
+    glutSolidSphere(0.5, 40, 40);
     glPopMatrix();
 
     glutSwapBuffers();
+    theta += 2;
 }
 
 GLvoid DrawObject(GLvoid) {
-    glEnable(GL_COLOR_MATERIAL);
-    glColor3f(0.7, 0.7, 0.7);
+    glNormal3f(0,0,1);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, 0, normal);
+        glVertexPointer(3, GL_FLOAT, 0, vertex);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+}
 
-    glPushMatrix();
-    glRotated(spinObj, 0, 1, 0);
-
-    glPopMatrix();
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-
-
+GLvoid DrawAxis(GLvoid) {
     glBegin(GL_LINES);
     glColor3f(1, 0, 0);
     glVertex3f(0, 0, 0);
@@ -132,16 +150,18 @@ GLvoid processSpecialKeys(int key, int x, int y) {
 }
 
 GLvoid InitGL(GLvoid) {
-    glMatrixMode(GL_PROJECTION);
-
 //    glShadeModel(GL_SMOOTH);	// Enable Smooth Shading (blends colours across a polygon/smoothed lighting
 //
 //     Set-up the depth buffer
 //    glClearDepth(-1.0f);		// Depth Buffer Setup
     glEnable(GL_DEPTH_TEST);    // Enables Depth Testing
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_NORMALIZE);
 //    glDepthFunc(GL_LEQUAL);		// The Type Of Depth Testing To Do
 //
-//    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
 
 }
 
@@ -160,4 +180,5 @@ GLvoid ReSizeGLScene(int w, int h) {
     gluPerspective(40.0f, ratio, 0.1f, 1000.0f);
     // вернуться к матрице проекции
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
